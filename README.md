@@ -132,4 +132,4 @@ Built as a Data Structures & Algorithms project.
 Implements core graph theory concepts: adjacency lists, BFS, DFS, Dijkstra, cycle detection.
 
 ## Live Demo
-https://farihakarim12.github.io/Product_Listing_Website/
+https://farihakarim12.github.io/Graph-Based-Path-Finder/

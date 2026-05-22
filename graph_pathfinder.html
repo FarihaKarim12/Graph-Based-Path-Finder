@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Path Finder</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --panel: #111118;
+    --panel2: #16161f;
+    --border: #2a2a3a;
+    --accent: #7c6eff;
+    --accent2: #ff6e9c;
+    --accent3: #6effd4;
+    --text: #e8e8f0;
+    --text2: #888899;
+    --node-default: #1e1e2e;
+    --node-stroke: #4a4a6a;
+    --node-visited: #7c6eff;
+    --node-current: #ff6e9c;
+    --node-path: #6effd4;
+    --edge: #2a2a4a;
+    --edge-active: #7c6eff;
+    --danger: #ff4a6a;
+    --success: #4aff9c;
+  }
+
+  *{ margin: 0; padding: 0; box-sizing: border-box; }
+
+  body{
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+    flex-shrink: 0;
+  }
+
+  .logo{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .logo-icon{
+    width: 32px; height: 32px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+
+  .logo-text{ font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+  .logo-text span{
+    color: var(--accent); 
+   }
+
+  .header-stats{
+    display: flex;
+    gap: 20px;
+  }
+
+  .stat{
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  .stat strong{
+    color: var(--accent3);
+    font-size: 14px;
+   }
+
+  .main{
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* LEFT SIDEBAR */
+  .sidebar{
+    width: 280px;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .sidebar-tabs{
+    display: flex;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tab{
+    flex: 1;
+    padding: 10px 6px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-align: center;
+    cursor: pointer;
+    color: var(--text2);
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+
+  .tab.active{
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  .tab-panel{
+    display: none;
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px; 
+   }
+  .tab-panel.active{
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .section-label{
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text2);
+    margin-bottom: 6px;
+  }
+
+  .input-row{
+    display: flex;
+    gap: 8px;
+    align-items: flex-end; 
+  }
+
+  input[type=text], input[type=number]{
+    width: 100%;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input:focus{
+    border-color: var(--accent);
+  }
+
+  input::placeholder{ color: var(--text2); }
+
+  .btn{
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 0.3px;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+
+  .btn-primary{
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover{ background: #9580ff; transform: translateY(-1px); }
+
+  .btn-secondary{
+    background: var(--panel2);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover{ border-color: var(--accent); color: var(--accent); }
+
+  .btn-danger{
+    background: transparent;
+    color: var(--danger);
+    border: 1px solid var(--danger);
+  }
+  .btn-danger:hover{ background: var(--danger); color: #fff; }
+
+  .btn-accent2{
+    background: var(--accent2);
+    color: #fff;
+  }
+  .btn-accent2:hover{ background: #ff8ab8; transform: translateY(-1px); }
+
+  .btn-accent3{
+    background: var(--accent3);
+    color: #0a0a0f;
+  }
+  .btn-accent3:hover{ filter: brightness(1.1); transform: translateY(-1px); }
+
+  .btn-full{ width: 100%; justify-content: center; display: flex; }
+
+  .algo-btn{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 13px;
+    width: 100%;
+    transition: all 0.2s;
+    text-align: left;
+  }
+
+  .algo-btn:hover{
+    border-color: var(--accent); color: var(--accent); 
+    }
+  .algo-btn .algo-icon{
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .algo-btn .algo-desc{
+    font-size: 10px;
+    color: var(--text2);
+    font-weight: 400;
+    margin-top: 1px;
+  }
+
+  .node-list{
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    max-height: 180px;
+    overflow-y: auto;
+  }
+
+  .node-item{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    background: var(--panel2);
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    font-size: 12px;
+    font-family: 'Space Mono', monospace;
+  }
+
+  .node-dot{
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+
+  .node-item button{
+    background: none;
+    border: none;
+    color: var(--text2);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 0 2px;
+    transition: color 0.2s;
+  }
+
+  .node-item button:hover{ color: var(--danger); }
+
+  /* CANVAS AREA */
+  .canvas-wrap{
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 20% 20%, rgba(124,110,255,0.04) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(255,110,156,0.03) 0%, transparent 50%);
+  }
+
+  canvas{
+    display: block;
+    cursor: crosshair;
+  }
+
+  .canvas-hint{
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(17,17,24,0.9);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 16px;
+    font-size: 11px;
+    color: var(--text2);
+    font-family: 'Space Mono', monospace;
+    pointer-events: none;
+    backdrop-filter: blur(4px);
+  }
+
+  .canvas-hint kbd{
+    background: var(--panel2);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 10px;
+    color: var(--text);
+  }
+
+  .mode-indicator{
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    display: flex;
+    gap: 8px;
+  }
+
+  .mode-badge{
+    background: rgba(17,17,24,0.9);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    backdrop-filter: blur(4px);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .mode-badge.active{
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(124,110,255,0.1);
+  }
+
+  /* RIGHT PANEL */
+  .right-panel{
+    width: 260px;
+    background: var(--panel);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .right-header{
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.3px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .output-area{
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    line-height: 1.7;
+    color: var(--text2);
+  }
+
+  .output-entry{
+    margin-bottom: 12px;
+    border-left: 2px solid var(--border);
+    padding-left: 10px;
+    animation: fadeIn 0.3s ease;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  .output-entry .entry-title{
+    color: var(--accent);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .output-entry.success { border-left-color: var(--accent3); }
+  .output-entry.success .entry-title { color: var(--accent3); }
+
+  .output-entry.warning { border-left-color: var(--accent2); }
+  .output-entry.warning .entry-title { color: var(--accent2); }
+
+  .output-entry.error { border-left-color: var(--danger); }
+  .output-entry.error .entry-title { color: var(--danger); }
+
+  .path-line { color: var(--text); }
+  .path-node { color: var(--accent3); }
+  .path-arrow { color: var(--text2); }
+
+  /* LEGEND */
+  .legend{
+    padding: 12px 16px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .legend-item{
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--text2);
+  }
+
+  .legend-dot{
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* MODAL */
+  .modal-overlay{
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    backdrop-filter: blur(4px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+
+  .modal-overlay.open{ opacity: 1; pointer-events: all; }
+
+  .modal{
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    width: 340px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    transform: scale(0.95);
+    transition: transform 0.2s;
+  }
+
+  .modal-overlay.open .modal{ transform: scale(1); }
+
+  .modal h3{
+    font-size: 16px;
+    font-weight: 800;
+  }
+
+  .modal-footer{
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  .form-group{ display: flex; flex-direction: column; gap: 6px; }
+  .form-label{ font-size: 11px; color: var(--text2); font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+ 
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0;
+  }
+ 
+  .speed-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: var(--text2);
+  }
+ 
+  input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+  }
+ 
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+  }
+ 
+  .clear-btn {
+    background: none;
+    border: none;
+    color: var(--text2);
+    cursor: pointer;
+    font-size: 11px;
+    font-family: 'Space Mono', monospace;
+    transition: color 0.2s;
+    padding: 2px;
+  }
+  .clear-btn:hover { color: var(--danger); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">⬡</div>
+    <div class="logo-text">Graph Based <span>Path Finder</span></div>
+  </div>
+  <div class="header-stats">
+    <div class="stat">Nodes: <strong id="stat-nodes">0</strong></div>
+    <div class="stat">Edges: <strong id="stat-edges">0</strong></div>
+    <div class="stat">Status: <strong id="stat-status" style="color:var(--accent2)">Ready</strong></div>
+  </div>
+</header>
+
+<div class="main">
+  <!-- LEFT SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-tabs">
+      <div class="tab active" data-tab="build">Build</div>
+      <div class="tab" data-tab="algo">Algo</div>
+      <div class="tab" data-tab="nodes">Nodes</div>
+    </div>
+
+    <!--build tab-->
+    <div class="tab-panel active" id="tab-build">
+      <div>
+        <div class="section-label">Interaction Mode</div>
+        <div style="display:flex;gap:6px;flex-direction:column">
+          <button class="algo-btn mode-btn active" data-mode="addNode">
+            <div class="algo-icon" style="background:rgba(124,110,255,0.2)">⊕</div>
+            <div>
+              <div>Add Node</div>
+              <div class="algo-desc">Click canvas to place a node</div>
+            </div>
+          </button>
+          <button class="algo-btn mode-btn" data-mode="addEdge">
+            <div class="algo-icon" style="background:rgba(110,255,212,0.15)">⟶</div>
+            <div>
+              <div>Add Edge</div>
+              <div class="algo-desc">Click two nodes to connect</div>
+            </div>
+          </button>
+          <button class="algo-btn mode-btn" data-mode="deleteNode">
+            <div class="algo-icon" style="background:rgba(255,74,106,0.15)">✕</div>
+            <div>
+              <div>Delete Node</div>
+              <div class="algo-desc">Click a node to remove it</div>
+            </div>
+          </button>
+          <button class="algo-btn mode-btn" data-mode="moveNode">
+            <div class="algo-icon" style="background:rgba(255,110,156,0.15)">⤢</div>
+            <div>
+              <div>Move Node</div>
+              <div class="algo-desc">Drag nodes to reposition</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div>
+        <div class="section-label">Quick Add Node</div>
+        <div class="input-row">
+          <input type="text" id="quick-node-name" placeholder="City name..." />
+          <button class="btn btn-primary" onclick="quickAddNode()">Add</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-label">Add Edge Manually</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <input type="text" id="edge-from" placeholder="From node..." />
+          <input type="text" id="edge-to" placeholder="To node..." />
+          <input type="number" id="edge-weight" placeholder="Weight (e.g. 5)" min="1" />
+          <button class="btn btn-secondary" onclick="manualAddEdge()">Add Edge</button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <div>
+        <div class="section-label">Presets</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <button class="btn btn-secondary" onclick="loadPreset('pakistan')">🇵🇰 Pakistan Cities</button>
+          <button class="btn btn-secondary" onclick="loadPreset('random')">🎲 Random Graph</button>
+          <button class="btn btn-danger" onclick="clearAll()">Clear All</button>
+        </div>
+      </div>
+    </div>
+
+    <!--algo tab-->>
+    <div class="tab-panel" id="tab-algo">
+      <div>
+        <div class="section-label">Start Node</div>
+        <input type="text" id="algo-start" placeholder="Enter node name..." />
+      </div>
+
+      <div class="speed-control">
+        <span>Speed</span>
+        <input type="range" id="speed-slider" min="100" max="1500" value="700" />
+      </div>
+
+      <div class="divider"></div>
+
+      <div>
+        <div class="section-label">Traversal</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <button class="algo-btn" onclick="runAlgo('bfs')">
+            <div class="algo-icon" style="background:rgba(124,110,255,0.2)">⊚</div>
+            <div>
+              <div>BFS</div>
+              <div class="algo-desc">Breadth-First Search</div>
+            </div>
+          </button>
+          <button class="algo-btn" onclick="runAlgo('dfs')">
+            <div class="algo-icon" style="background:rgba(110,255,212,0.15)">⬇</div>
+            <div>
+              <div>DFS</div>
+              <div class="algo-desc">Depth-First Search</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-label">Shortest Path</div>
+        <button class="algo-btn" onclick="runAlgo('dijkstra')">
+          <div class="algo-icon" style="background:rgba(255,110,156,0.15)">◎</div>
+          <div>
+            <div>Dijkstra</div>
+            <div class="algo-desc">All shortest paths from start</div>
+          </div>
+        </button>
+      </div>
+
+      <div class="divider"></div>
+
+      <div>
+        <div class="section-label">Graph Analysis</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <button class="btn btn-secondary" onclick="checkConnected()">Check Connectivity</button>
+          <button class="btn btn-secondary" onclick="checkCycle()">Detect Cycles</button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <button class="btn btn-secondary" onclick="resetColors()">Reset Colors</button>
+    </div>
+
+    <!--nodes tab-->>
+    <div class="tab-panel" id="tab-nodes">
+      <div>
+        <div class="section-label">All Nodes</div>
+        <div class="node-list" id="node-list"></div>
+      </div>
+      <div class="divider"></div>
+      <div>
+        <div class="section-label">All Edges</div>
+        <div class="node-list" id="edge-list" style="max-height:200px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CANVAS -->
+  <div class="canvas-wrap" id="canvas-wrap">
+    <canvas id="graph-canvas"></canvas>
+    <div class="mode-indicator">
+      <div class="mode-badge active" id="mode-display">ADD NODE</div>
+    </div>
+    <div class="canvas-hint">
+      <kbd>Click</kbd> to add nodes · <kbd>Switch mode</kbd> to add edges · <kbd>Drag</kbd> to move
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+    <div class="right-header">
+      <span>Output Log</span>
+      <button class="clear-btn" onclick="clearLog()">clear</button>
+    </div>
+    <div class="output-area" id="output-area">
+      <div class="output-entry">
+        <div class="entry-title">Welcome</div>
+        <div>Click the canvas to add nodes. Switch to Edge mode to connect them.</div>
+      </div>
+    </div>
+    <div class="legend">
+      <div class="section-label">Legend</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--node-default);border:1px solid var(--node-stroke)"></div>Unvisited</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--node-visited)"></div>Visited</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--node-current)"></div>Current</div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--node-path)"></div>Shortest Path</div>
+    </div>
+  </div>
+</div>
+
+<!-- Edge Weight Modal -->
+<div class="modal-overlay" id="edge-modal">
+  <div class="modal">
+    <h3>Set Edge Weight</h3>
+    <div class="form-group">
+      <div class="form-label">From → To</div>
+      <div id="modal-edge-label" style="font-family:'Space Mono',monospace;font-size:13px;color:var(--accent)"></div>
+    </div>
+    <div class="form-group">
+      <div class="form-label">Weight</div>
+      <input type="number" id="modal-weight" value="1" min="1" />
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeEdgeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmEdge()">Add Edge</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+//GRAPH DATA STRUCTURES
+
+let nodes = []; //{id, name, x, y, color}
+let edges = []; //{from, to, weight}
+let nodeIdCounter = 0;
+
+let mode = 'addNode';
+let edgePending = null; //first node selected for edge
+let dragging = null;
+let dragOffX = 0, dragOffY = 0;
+
+let animRunning = false;
+let pendingEdgeFrom = null, pendingEdgeTo = null;
+
+const NODE_R = 22;
+
+//CANVAS SETUP
+
+const canvas = document.getElementById('graph-canvas');
+const ctx = canvas.getContext('2d');
+const wrap = document.getElementById('canvas-wrap');
+
+function resizeCanvas() {
+  canvas.width = wrap.clientWidth;
+  canvas.height = wrap.clientHeight;
+  draw();
+}
+
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+//DRAW
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawEdges();
+  drawNodes();
+}
+
+function drawEdges() {
+  for (const e of edges) {
+    const nf = getNodeById(e.from);
+    const nt = getNodeById(e.to);
+    if (!nf || !nt) continue;
+
+    const dx = nt.x - nf.x, dy = nt.y - nf.y;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    if (dist === 0) continue;
+
+    const ux = dx/dist, uy = dy/dist;
+    const sx = nf.x + ux*NODE_R, sy = nf.y + uy*NODE_R;
+    const ex = nt.x - ux*(NODE_R+6), ey = nt.y - uy*(NODE_R+6);
+
+    ctx.beginPath();
+    ctx.moveTo(sx, sy);
+    ctx.lineTo(ex, ey);
+    ctx.strokeStyle = e.highlighted ? '#7c6eff' : (e.pathHighlighted ? '#6effd4' : '#2a2a4a');
+    ctx.lineWidth = e.pathHighlighted ? 2.5 : (e.highlighted ? 2 : 1.2);
+    ctx.stroke();
+
+    //arrowhead
+    const angle = Math.atan2(ey - sy, ex - sx);
+    ctx.beginPath();
+    ctx.moveTo(ex, ey);
+    ctx.lineTo(ex - 10*Math.cos(angle - 0.4), ey - 10*Math.sin(angle - 0.4));
+    ctx.lineTo(ex - 10*Math.cos(angle + 0.4), ey - 10*Math.sin(angle + 0.4));
+    ctx.closePath();
+    ctx.fillStyle = e.pathHighlighted ? '#6effd4' : (e.highlighted ? '#7c6eff' : '#2a2a4a');
+    ctx.fill();
+
+    //weight label
+    const mx = (sx + ex) / 2 + uy * -14;
+    const my = (sy + ey) / 2 + (-ux) * -14;
+    ctx.font = '500 11px Space Mono, monospace';
+    ctx.fillStyle = e.pathHighlighted ? '#6effd4' : (e.highlighted ? '#9580ff' : '#555570');
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(e.weight, mx, my);
+  }
+}
+
+function drawNodes() {
+  for (const n of nodes) {
+    // outer glow for special states
+    if (n.state === 'current' || n.state === 'path') {
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, NODE_R + 8, 0, Math.PI*2);
+      const g = ctx.createRadialGradient(n.x, n.y, NODE_R, n.x, n.y, NODE_R+8);
+      const gc = n.state === 'path' ? '110,255,212' : '255,110,156';
+      g.addColorStop(0, `rgba(${gc},0.3)`);
+      g.addColorStop(1, `rgba(${gc},0)`);
+      ctx.fillStyle = g;
+      ctx.fill();
+    }
+
+    // main circle
+    ctx.beginPath();
+    ctx.arc(n.x, n.y, NODE_R, 0, Math.PI*2);
+
+    let fill, stroke;
+    if (n.state === 'current') { fill = '#3a1a2e'; stroke = '#ff6e9c'; }
+    else if (n.state === 'visited') { fill = '#1a1a3e'; stroke = '#7c6eff'; }
+    else if (n.state === 'path') { fill = '#0a2a20'; stroke = '#6effd4'; }
+    else { fill = '#1e1e2e'; stroke = (n === edgePending) ? '#6effd4' : '#4a4a6a'; }
+
+    ctx.fillStyle = fill;
+    ctx.fill();
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = n === edgePending ? 2.5 : 1.5;
+    ctx.stroke();
+
+    // label
+    ctx.font = `700 ${n.name.length > 6 ? '9' : '11'}px Syne, sans-serif`;
+    ctx.fillStyle = n.state === 'current' ? '#ff6e9c'
+                  : n.state === 'visited' ? '#9580ff'
+                  : n.state === 'path' ? '#6effd4'
+                  : '#e8e8f0';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(n.name.length > 8 ? n.name.slice(0,7)+'…' : n.name, n.x, n.y);
+  }
+}
+
+//MOUSE INTERACTION
+
+canvas.addEventListener('mousedown', onMouseDown);
+canvas.addEventListener('mousemove', onMouseMove);
+canvas.addEventListener('mouseup', onMouseUp);
+
+function getNodeAt(x, y) {
+  for (let i = nodes.length-1; i >= 0; i--) {
+    const n = nodes[i];
+    if (Math.hypot(n.x-x, n.y-y) <= NODE_R) return n;
+  }
+  return null;
+}
+
+function onMouseDown(e) {
+  if (animRunning) return;
+  const rect = canvas.getBoundingClientRect();
+  const x = e.clientX - rect.left, y = e.clientY - rect.top;
+  const hit = getNodeAt(x, y);
+
+  if (mode === 'addNode') {
+    if (!hit) {
+      addNode(`N${nodeIdCounter}`, x, y);
+    }
+  } else if (mode === 'addEdge') {
+    if (hit) {
+      if (!edgePending) {
+        edgePending = hit;
+        draw();
+      } else {
+        if (hit !== edgePending) {
+          pendingEdgeFrom = edgePending;
+          pendingEdgeTo = hit;
+          edgePending = null;
+          openEdgeModal();
+        } else {
+          edgePending = null;
+          draw();
+        }
+      }
+    }
+  } else if (mode === 'deleteNode') {
+    if (hit) removeNode(hit.id);
+  } else if (mode === 'moveNode') {
+    if (hit) {
+      dragging = hit;
+      dragOffX = x - hit.x;
+      dragOffY = y - hit.y;
+      canvas.style.cursor = 'grabbing';
+    }
+  }
+}
+
+function onMouseMove(e) {
+  if (dragging) {
+    const rect = canvas.getBoundingClientRect();
+    dragging.x = e.clientX - rect.left - dragOffX;
+    dragging.y = e.clientY - rect.top - dragOffY;
+    draw();
+  } else {
+    const rect = canvas.getBoundingClientRect();
+    const hit = getNodeAt(e.clientX - rect.left, e.clientY - rect.top);
+    canvas.style.cursor = (mode === 'moveNode' && hit) ? 'grab'
+                        : (mode === 'deleteNode' && hit) ? 'not-allowed'
+                        : mode === 'addNode' ? 'crosshair'
+                        : 'default';
+  }
+}
+
+function onMouseUp() {
+  if (dragging) {
+    dragging = null;
+    canvas.style.cursor = 'default';
+  }
+}
+
+// node/edge management
+
+function addNode(name, x, y) {
+  if (getNodeByName(name)) {
+    log('warning', 'Duplicate', `Node "${name}" already exists.`);
+    return null;
+  }
+  const node = { id: nodeIdCounter++, name, x, y, state: 'default' };
+  nodes.push(node);
+  updateStats();
+  refreshNodeList();
+  draw();
+  return node;
+}
+
+function removeNode(id) {
+  nodes = nodes.filter(n => n.id !== id);
+  edges = edges.filter(e => e.from !== id && e.to !== id);
+  updateStats();
+  refreshNodeList();
+  draw();
+  log('warning', 'Deleted', 'Node and its edges removed.');
+}
+
+function addEdge(fromId, toId, weight) {
+  // check duplicate
+  if (edges.find(e => e.from === fromId && e.to === toId)) {
+    log('error', 'Duplicate Edge', 'This edge already exists.');
+    return;
+  }
+  edges.push({ from: fromId, to: toId, weight: parseInt(weight) || 1 });
+  updateStats();
+  refreshNodeList();
+  draw();
+}
+
+function getNodeById(id) { return nodes.find(n => n.id === id); }
+function getNodeByName(name) { return nodes.find(n => n.name.toLowerCase() === name.toLowerCase()); }
+
+function clearAll() {
+  nodes = []; edges = []; nodeIdCounter = 0; edgePending = null;
+  updateStats(); refreshNodeList(); draw();
+  log('warning', 'Cleared', 'All nodes and edges removed.');
+}
+
+function quickAddNode() {
+  const inp = document.getElementById('quick-node-name');
+  const name = inp.value.trim();
+  if (!name) return;
+  const x = 60 + Math.random() * (canvas.width - 120);
+  const y = 60 + Math.random() * (canvas.height - 120);
+  const n = addNode(name, x, y);
+  if (n) { log('success', 'Node Added', `"${name}" placed on canvas.`); inp.value = ''; }
+}
+
+function manualAddEdge() {
+  const a = document.getElementById('edge-from').value.trim();
+  const b = document.getElementById('edge-to').value.trim();
+  const w = parseInt(document.getElementById('edge-weight').value) || 1;
+  const na = getNodeByName(a), nb = getNodeByName(b);
+  if (!na) { log('error', 'Error', `Node "${a}" not found.`); return; }
+  if (!nb) { log('error', 'Error', `Node "${b}" not found.`); return; }
+  if (w <= 0) { log('error', 'Error', 'Weight must be positive.'); return; }
+  addEdge(na.id, nb.id, w);
+  log('success', 'Edge Added', `${a} → ${b} (weight: ${w})`);
+}
+
+//edge modal
+
+function openEdgeModal() {
+  const na = getNodeById(pendingEdgeFrom.id);
+  const nb = getNodeById(pendingEdgeTo.id);
+  document.getElementById('modal-edge-label').textContent = `${na.name}  →  ${nb.name}`;
+  document.getElementById('modal-weight').value = 1;
+  document.getElementById('edge-modal').classList.add('open');
+  setTimeout(() => document.getElementById('modal-weight').focus(), 100);
+}
+
+function closeEdgeModal() {
+  document.getElementById('edge-modal').classList.remove('open');
+  pendingEdgeFrom = null; pendingEdgeTo = null;
+  draw();
+}
+
+function confirmEdge() {
+  const w = parseInt(document.getElementById('modal-weight').value) || 1;
+  if (w <= 0) { log('error', 'Error', 'Weight must be positive.'); return; }
+  addEdge(pendingEdgeFrom.id, pendingEdgeTo.id, w);
+  log('success', 'Edge Added', `${pendingEdgeFrom.name} → ${pendingEdgeTo.name} (weight: ${w})`);
+  closeEdgeModal();
+}
+
+document.getElementById('modal-weight').addEventListener('keydown', e => { if (e.key === 'Enter') confirmEdge(); });
+
+//ALGORITHMS
+
+function getSpeed() {
+  return 1600 - parseInt(document.getElementById('speed-slider').value);
+}
+
+function resetColors() {
+  nodes.forEach(n => n.state = 'default');
+  edges.forEach(e => { e.highlighted = false; e.pathHighlighted = false; });
+  draw();
+}
+
+function getAlgoStart() {
+  const val = document.getElementById('algo-start').value.trim();
+  if (!val && nodes.length > 0) return nodes[0];
+  const n = getNodeByName(val);
+  if (!n) { log('error', 'Error', `Node "${val}" not found.`); return null; }
+  return n;
+}
+
+async function runAlgo(type) {
+  if (animRunning) { log('warning', 'Busy', 'Wait for current animation to finish.'); return; }
+  if (nodes.length === 0) { log('error', 'Empty', 'Add some nodes first.'); return; }
+  resetColors();
+  const startNode = getAlgoStart();
+  if (!startNode) return;
+  animRunning = true;
+  document.getElementById('stat-status').textContent = type.toUpperCase();
+  document.getElementById('stat-status').style.color = 'var(--accent)';
+
+  if (type === 'bfs') await bfs(startNode);
+  else if (type === 'dfs') await dfs(startNode);
+  else if (type === 'dijkstra') await dijkstra(startNode);
+
+  animRunning = false;
+  document.getElementById('stat-status').textContent = 'Done';
+  document.getElementById('stat-status').style.color = 'var(--accent3)';
+}
+
+async function bfs(start) {
+  const visited = new Set();
+  const queue = [start];
+  const order = [];
+  visited.add(start.id);
+
+  while (queue.length > 0) {
+    const now = queue.shift();
+    order.push(now.name);
+    now.state = 'current';
+    draw();
+    await sleep(getSpeed());
+    now.state = 'visited';
+    draw();
+
+    const neighbors = edges.filter(e => e.from === now.id);
+    for (const e of neighbors) {
+      if (!visited.has(e.to)) {
+        visited.add(e.to);
+        e.highlighted = true;
+        const nb = getNodeById(e.to);
+        queue.push(nb);
+      }
+    }
+    draw();
+  }
+
+  log('success', 'BFS Complete', `Order: ${order.map(n => `<span class="path-node">${n}</span>`).join('<span class="path-arrow"> → </span>')}`);
+}
+
+async function dfs(start) {
+  const visited = new Set();
+  const order = [];
+
+  async function dfsVisit(node) {
+    visited.add(node.id);
+    order.push(node.name);
+    node.state = 'current';
+    draw();
+    await sleep(getSpeed());
+    node.state = 'visited';
+    draw();
+
+    const neighbors = edges.filter(e => e.from === node.id);
+    for (const e of neighbors) {
+      if (!visited.has(e.to)) {
+        e.highlighted = true;
+        draw();
+        await dfsVisit(getNodeById(e.to));
+      }
+    }
+  }
+
+  await dfsVisit(start);
+  log('success', 'DFS Complete', `Order: ${order.map(n => `<span class="path-node">${n}</span>`).join('<span class="path-arrow"> → </span>')}`);
+}
+
+async function dijkstra(start) {
+  const INF = Infinity;
+  const dist = {}, parent = {};
+  nodes.forEach(n => { dist[n.id] = INF; parent[n.id] = null; });
+  dist[start.id] = 0;
+
+  const pq = [...nodes].map(n => n.id);
+
+  const getMin = () => pq.reduce((a, b) => dist[a] < dist[b] ? a : b);
+
+  while (pq.length > 0) {
+    const uid = getMin();
+    pq.splice(pq.indexOf(uid), 1);
+    const u = getNodeById(uid);
+
+    if (dist[uid] === INF) break;
+
+    u.state = 'current';
+    draw();
+    await sleep(getSpeed());
+    u.state = 'visited';
+    draw();
+
+    const neighbors = edges.filter(e => e.from === uid);
+    for (const e of neighbors) {
+      if (dist[uid] + e.weight < dist[e.to]) {
+        dist[e.to] = dist[uid] + e.weight;
+        parent[e.to] = uid;
+        e.highlighted = true;
+        draw();
+      }
+    }
+  }
+
+  // build result log + highlight paths
+  edges.forEach(e => e.highlighted = false);
+  let resultHTML = '';
+  for (const n of nodes) {
+    if (n.id === start.id) continue;
+    const path = [];
+    let cur = n.id;
+    while (cur !== null) {
+      path.unshift(getNodeById(cur).name);
+      cur = parent[cur];
+    }
+
+    if (dist[n.id] === INF) {
+      resultHTML += `<div><span style="color:var(--danger)">${n.name}</span>: unreachable</div>`;
+    } else {
+      resultHTML += `<div><span class="path-node">${n.name}</span>: dist=${dist[n.id]} &nbsp;|&nbsp; ${path.map(p => `<span class="path-node">${p}</span>`).join('<span class="path-arrow">→</span>')}</div>`;
+      // highlight path edges
+      for (let i = 0; i < path.length-1; i++) {
+        const na = getNodeByName(path[i]), nb = getNodeByName(path[i+1]);
+        if (na && nb) {
+          const pe = edges.find(e => e.from === na.id && e.to === nb.id);
+          if (pe) { pe.pathHighlighted = true; nb.state = 'path'; }
+        }
+      }
+    }
+  }
+  start.state = 'path';
+  draw();
+  log('success', `Dijkstra from ${start.name}`, resultHTML);
+}
+
+function checkConnected() {
+  if (nodes.length === 0) { log('error', 'Error', 'No nodes in graph.'); return; }
+  const visited = new Set();
+  const queue = [nodes[0].id];
+  visited.add(nodes[0].id);
+
+  while (queue.length > 0) {
+    const cur = queue.shift();
+    for (const e of edges) {
+      if (e.from === cur && !visited.has(e.to)) {
+        visited.add(e.to);
+        queue.push(e.to);
+      }
+    }
+  }
+
+  const connected = visited.size === nodes.length;
+  if (connected) {
+    log('success', 'Connectivity', '✓ Graph is fully connected (all nodes reachable from node 0).');
+  } else {
+    log('warning', 'Connectivity', `✗ Graph is NOT fully connected. Only ${visited.size}/${nodes.length} nodes reachable.`);
+  }
+}
+
+function checkCycle() {
+  if (nodes.length === 0) { log('error', 'Error', 'No nodes in graph.'); return; }
+  const visited = new Set(), recStack = new Set();
+  let found = false;
+
+  function dfs(id) {
+    visited.add(id);
+    recStack.add(id);
+    for (const e of edges) {
+      if (e.from === id) {
+        if (!visited.has(e.to)) {
+          if (dfs(e.to)) return true;
+        }
+        if (recStack.has(e.to)) return true;
+      }
+    }
+    recStack.delete(id);
+    return false;
+  }
+
+  for (const n of nodes) {
+    if (!visited.has(n.id)) {
+      if (dfs(n.id)) { found = true; break; }
+    }
+  }
+
+  if (found) {
+    log('warning', 'Cycle Detection', '⟳ Cycle detected in the graph.');
+  } else {
+    log('success', 'Cycle Detection', '✓ No cycles found. Graph is acyclic (DAG).');
+  }
+}
+
+//PRESETS
+
+function loadPreset(type) {
+  clearAll();
+  if (type === 'pakistan') {
+    const cw = canvas.width, ch = canvas.height;
+    const cities = [
+      ['Karachi',   cw*0.15, ch*0.82],
+      ['Hyderabad', cw*0.22, ch*0.68],
+      ['Sukkur',    cw*0.32, ch*0.52],
+      ['Lahore',    cw*0.55, ch*0.28],
+      ['Islamabad', cw*0.52, ch*0.18],
+      ['Rawalpindi',cw*0.53, ch*0.25],
+      ['Multan',    cw*0.45, ch*0.42],
+      ['Peshawar',  cw*0.42, ch*0.12],
+      ['Quetta',    cw*0.25, ch*0.35],
+      ['Faisalabad',cw*0.50, ch*0.35],
+    ];
+    cities.forEach(([name, x, y]) => addNode(name, x, y));
+
+    const edgeData = [
+      ['Karachi','Hyderabad',136],['Hyderabad','Sukkur',322],
+      ['Sukkur','Multan',383],['Multan','Lahore',348],
+      ['Lahore','Faisalabad',128],['Faisalabad','Multan',210],
+      ['Lahore','Rawalpindi',375],['Rawalpindi','Islamabad',14],
+      ['Islamabad','Peshawar',171],['Rawalpindi','Peshawar',160],
+      ['Multan','Quetta',580],['Quetta','Karachi',683],
+      ['Sukkur','Quetta',420],['Lahore','Islamabad',380],
+    ];
+    edgeData.forEach(([a, b, w]) => {
+      const na = getNodeByName(a), nb = getNodeByName(b);
+      if (na && nb) { addEdge(na.id, nb.id, w); addEdge(nb.id, na.id, w); }
+    });
+    log('success', 'Preset Loaded', 'Pakistan major cities road network loaded. Try Dijkstra from Karachi!');
+  } else if (type === 'random') {
+    const cw = canvas.width, ch = canvas.height;
+    const names = ['A','B','C','D','E','F','G'];
+    names.forEach((name, i) => {
+      const angle = (i / names.length) * Math.PI * 2 - Math.PI/2;
+      const r = Math.min(cw, ch) * 0.33;
+      addNode(name, cw/2 + r*Math.cos(angle), ch/2 + r*Math.sin(angle));
+    });
+    for (let i = 0; i < nodes.length; i++) {
+      const j = (i+1) % nodes.length;
+      addEdge(nodes[i].id, nodes[j].id, Math.floor(Math.random()*20)+1);
+    }
+    for (let k = 0; k < 4; k++) {
+      const a = Math.floor(Math.random()*nodes.length);
+      const b = Math.floor(Math.random()*nodes.length);
+      if (a !== b) addEdge(nodes[a].id, nodes[b].id, Math.floor(Math.random()*15)+1);
+    }
+    log('success', 'Preset Loaded', 'Random graph generated. Try BFS or DFS!');
+  }
+}
+
+//ui helpers
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function log(type, title, content) {
+  const area = document.getElementById('output-area');
+  const div = document.createElement('div');
+  div.className = `output-entry ${type}`;
+  div.innerHTML = `<div class="entry-title">${title}</div><div class="path-line">${content}</div>`;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+function clearLog() {
+  document.getElementById('output-area').innerHTML = '';
+}
+
+function updateStats() {
+  document.getElementById('stat-nodes').textContent = nodes.length;
+  document.getElementById('stat-edges').textContent = edges.length;
+}
+
+function refreshNodeList() {
+  const nl = document.getElementById('node-list');
+  nl.innerHTML = nodes.map(n =>
+    `<div class="node-item">
+      <div style="display:flex;align-items:center">
+        <div class="node-dot"></div>${n.name}
+      </div>
+      <button onclick="removeNode(${n.id})" title="Delete">×</button>
+    </div>`
+  ).join('');
+
+  const el = document.getElementById('edge-list');
+  el.innerHTML = edges.map(e => {
+    const na = getNodeById(e.from), nb = getNodeById(e.to);
+    return `<div class="node-item">
+      <span style="color:var(--text2);font-size:11px">${na?.name} → ${nb?.name} : <span style="color:var(--accent)">${e.weight}</span></span>
+    </div>`;
+  }).join('');
+}
+
+//Mode buttons
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    mode = btn.dataset.mode;
+    edgePending = null;
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('mode-display').textContent = mode.replace(/([A-Z])/g, ' $1').toUpperCase().trim();
+    draw();
+  });
+});
+
+//Tabs
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+  });
+});
+
+//Enter key on quick add
+document.getElementById('quick-node-name').addEventListener('keydown', e => { if (e.key === 'Enter') quickAddNode(); });
+
+//Initial load
+loadPreset('pakistan');
+</script>
+</body>
+</html>
